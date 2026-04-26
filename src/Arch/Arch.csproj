@@ -55,15 +55,17 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;EVENTS;</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release-Events'">
     <DefineConstants>TRACE;EVENTS;</DefineConstants>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release-PureECS'">
     <DefineConstants>TRACE;PURE_ECS</DefineConstants>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <PropertyGroup>
