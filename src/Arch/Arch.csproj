@@ -35,7 +35,8 @@
 
     <NoWarn>1701;1702;1591</NoWarn>
 
-    <Configurations>Debug;Debug-PureECS;Debug-Events;Release;Release-PureECS;Release-Events;</Configurations>
+    <TargetFramework>net8.0</TargetFramework>
+    <Configurations>Debug;Debug-PureECS;Debug-Events;Release;Release-PureECS;Release-Events;Debug-Editor;Release-Editor;</Configurations>
 
     <UnityPublish>true</UnityPublish>
   </PropertyGroup>
@@ -54,6 +55,10 @@
     <DefineConstants>TRACE;EVENTS;</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)'=='Debug-Editor'">
+    <DefineConstants>TRACE;EVENTS;EDITOR</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DefineConstants>TRACE;EVENTS;</DefineConstants>
   </PropertyGroup>
@@ -65,6 +70,11 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release-PureECS'">
     <DefineConstants>TRACE;PURE_ECS</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release-Editor'">
+    <DefineConstants>TRACE;EVENTS;EDITOR;</DefineConstants>
     <Optimize>true</Optimize>
   </PropertyGroup>
 
