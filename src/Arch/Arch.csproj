@@ -32,6 +32,7 @@
     <LangVersion>12</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Copyright>Apache2.0</Copyright>
+    <WarningLevel>0</WarningLevel>
 
     <NoWarn>1701;1702;1591</NoWarn>
 
