@@ -72,7 +72,20 @@ public partial class World
     ///     A list of all existing <see cref="Worlds"/>.
     ///     Should not be modified by the user.
     /// </summary>
-    public static World[] Worlds { get; private set; } = new World[4];
+    public static World[] Worlds
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _worlds;
+    }
+
+    private static World[] _worlds = new World[4];
+
+    /// <summary>
+    ///     Serializes every write to <see cref="Worlds"/>, <see cref="RecycledWorldIds"/> and <see cref="WorldSize"/>.
+    ///     Locking the <see cref="Worlds"/> array itself is unsound: <see cref="Create"/> replaces it when it grows,
+    ///     so a thread waiting on the old array and a thread arriving after the swap would hold different locks.
+    /// </summary>
+    private static readonly object WorldsLock = new();
 
     /// <summary>
     ///     Stores recycled <see cref="World"/> IDs.
@@ -106,23 +119,27 @@ public partial class World
 #if PURE_ECS
         return new World(-1, chunkSizeInBytes, minimumAmountOfEntitiesPerChunk, archetypeCapacity, entityCapacity);
 #else
-        lock (Worlds)
+        lock (WorldsLock)
         {
             var recycle = RecycledWorldIds.TryDequeue(out var id);
             var recycledId = recycle ? id : WorldSize;
 
             var world = new World(recycledId, chunkSizeInBytes, minimumAmountOfEntitiesPerChunk, archetypeCapacity, entityCapacity);
 
-            // If you need to ensure a higher capacity, you can manually check and increase it
-            if (recycledId >= Worlds.Length)
+            // Readers index Worlds without the lock, so a grown array is filled completely before it is published.
+            var worlds = _worlds;
+            if (recycledId >= worlds.Length)
             {
-                var newCapacity = Worlds.Length * 2;
-                var worlds = Worlds;
-                Array.Resize(ref worlds, newCapacity);
-                Worlds = worlds;
+                var resized = new World[worlds.Length * 2];
+                Array.Copy(worlds, resized, worlds.Length);
+                resized[recycledId] = world;
+                Volatile.Write(ref _worlds, resized);
+            }
+            else
+            {
+                Volatile.Write(ref worlds[recycledId], world);
             }
 
-            Worlds[recycledId] = world;
             Interlocked.Increment(ref worldSizeUnsafe);
             return world;
         }
@@ -533,9 +550,9 @@ public partial class World : IDisposable
         _isDisposed = true;
         var world = this;
 #if !PURE_ECS
-        lock (Worlds)
+        lock (WorldsLock)
         {
-            Worlds[world.Id] = null!;
+            Volatile.Write(ref _worlds[world.Id], null!);
             RecycledWorldIds.Enqueue(world.Id);
             Interlocked.Decrement(ref worldSizeUnsafe);
         }
